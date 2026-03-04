@@ -25,6 +25,7 @@ export const isAuth = async (
     if (parts[0] !== "Bearer") {
       res.status(401).json({
         success: false,
+        secure:false,
         msg: "Invalid Token",
       });
       return;

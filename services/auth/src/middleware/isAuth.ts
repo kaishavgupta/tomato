@@ -12,7 +12,7 @@ export const isAuth = async (
   next: NextFunction,
 ): Promise<void> => {
   try {
-    const token = req.cookies.user as string;
+    const token = req.cookies?.user as string;
     if (!token) {
       res.status(401).json({
         success: false,

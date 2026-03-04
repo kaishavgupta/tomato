@@ -7,8 +7,7 @@ export const authService = axios.create({
 
 export const fetch_User = async () => {
   try {
-    const data = await authService.get(`api/auth/add_role`, {
-      withCredentials: true,
+    const data = await authService.get(`api/auth/user_profile`, {
     });
     console.log(data);
   } catch (error) {

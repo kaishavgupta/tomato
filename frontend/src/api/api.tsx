@@ -7,10 +7,13 @@ export const authService = axios.create({
 
 export const fetch_User = async () => {
   try {
-    const data = await authService.get(`api/auth/user_profile`, {
+    const response = await authService.get(`api/auth/user_profile`, {
     });
-    console.log(data);
+    console.log(response);
+    
+    return response.data
   } catch (error) {
     console.log(`Error From fetch_user ${error}`);
+    throw error
   }
 };

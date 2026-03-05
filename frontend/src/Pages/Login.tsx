@@ -4,15 +4,19 @@ import { authService, fetch_User } from "../api/api";
 import toast from "react-hot-toast";
 import { useNavigate } from "react-router-dom";
 import { FcGoogle } from "react-icons/fc";
+import { useQueryClient } from "@tanstack/react-query";
 const Login = () => {
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
+  const queryClient = useQueryClient(); // Add this
+
   const responseGoogle = async (authResult) => {
     setLoading(true);
     try {
       const result = await authService.post(`/api/auth/login`, {
         code: authResult["code"],
       });
+      queryClient.invalidateQueries({ queryKey: ["user"] });
       toast.success(result.data.msg);
       setLoading(false);
       fetch_User();

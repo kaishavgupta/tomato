@@ -55,8 +55,8 @@ const Login = () => {
             {loading ? "signing in ..." : "continue with Google"}
           </button>
           <p className="text-center text-xs text-gray-400">
-            By Continue , you agree with our <span>Terms of Services</span>
-            Privacy Policy
+            By Continue , you agree with our <span className="text-blue-500 cursor-pointer">Terms of Services {" "}</span> and{" "}
+            <span className="text-blue-500 cursor-pointer">Privacy & Policy</span>
           </p>
         </div>
       </div>

@@ -7,7 +7,6 @@ export const updateTokenSetCookie=(user:IUser,res:Response)=>{
     res.cookie("Tomato_user", token, {
       maxAge: 90000000,
       httpOnly: true,
-      secure: true,
       sameSite: "lax"
     });    
 

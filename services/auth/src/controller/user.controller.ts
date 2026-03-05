@@ -85,12 +85,13 @@ export const user_profile = TryCatch(async (req: Request, res: Response) => {
   const user = req.user;
   
   if (!user) {
-    res.status(401).json({
+    return res.status(401).json({
       success: false,
       message: "Unatuthorised access",
     });
   }
-  const userData = await user_Model.findById(user);
+  const userData = await user_Model.findById(user).select({createdAt:0,updatedAt:0,__v
+:0});
 
   res.status(200).json({
     success: true,

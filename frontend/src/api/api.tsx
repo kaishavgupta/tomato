@@ -1,4 +1,5 @@
 import axios from "axios";
+import type { roles } from "../type";
 
 export const authService = axios.create({
   baseURL: "http://localhost:3000/",
@@ -11,9 +12,21 @@ export const fetch_User = async () => {
     });
     console.log(response);
     
-    return response.data
+    return response?.data
   } catch (error) {
     console.log(`Error From fetch_user ${error}`);
     throw error
   }
 };
+
+
+export const add_role=async(role:roles)=>{
+  try {
+    const response = await authService.post(`api/auth/add_role`,{role});
+    console.log(response);
+    
+    return response
+  } catch (error) {
+    console.log(error);
+  }
+}

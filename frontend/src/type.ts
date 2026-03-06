@@ -24,7 +24,7 @@ export interface AppContextType {
   userData: UserType | undefined;
   isLoading: boolean;
   isError: boolean;
-  isauth:boolean
+  isauth:boolean;
 }
 
 export interface apiInterfaceType {

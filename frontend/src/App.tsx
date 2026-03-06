@@ -5,19 +5,34 @@ import { Toaster } from "react-hot-toast";
 import PublicRoute from "./components/PublicRoute";
 import ProtectedRoute from "./components/ProtectedRoute";
 import SelectRole from "./Pages/SelectRole"
+import Layout from "./components/Layout";
+import Menu from "./Pages/Menu";
+import Track from "./Pages/Track";
+import Order from "./Pages/Order";
 const App = () => {
 const router = createBrowserRouter([
   {
-    element: <ProtectedRoute />,   // no children prop, Outlet handles it
+    element: <Layout />,           // ✅ Navbar always visible
     children: [
-      { path: "/", element: <Home /> },
-      { path: "/select-role", element: <SelectRole /> },
-    ],
-  },
-  {
-    element: <PublicRoute />,
-    children: [
-      { path: "/login", element: <Login /> },
+      {
+        element: <ProtectedRoute />,
+        children: [
+          { path: "/", element: <Home /> },
+          { path: "/select-role", element: <SelectRole /> },
+          {path:"/track",element:<Track/>},
+          {path:"/orders",element:<Order/>},
+          {path:"/cart",element:<Order/>}
+        ],
+      },
+      {
+          path:"/menu",element:<Menu/>,
+      },
+      {
+        element: <PublicRoute />,
+        children: [
+          { path: "/login", element: <Login /> },
+        ],
+      },
     ],
   },
 ]);

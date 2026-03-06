@@ -28,5 +28,6 @@ export const add_role=async(role:roles)=>{
     return response
   } catch (error) {
     console.log(error);
+    throw error
   }
 }

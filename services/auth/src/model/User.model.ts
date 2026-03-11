@@ -4,7 +4,11 @@ import mongoose, { Document, Schema } from "mongoose";
 enum role {
   user = "user",
   rider = "rider",
+<<<<<<< HEAD
   resturant = "resturant",
+=======
+  restaurant = "restaurant",
+>>>>>>> my-current-work
 }
 
 export interface IUser extends Document {
@@ -33,7 +37,11 @@ const UserSchema: Schema<IUser> = new Schema(
     },
     role: {
       type: String,
+<<<<<<< HEAD
       enum: ["user", "rider", "resturant"],
+=======
+      enum: ["user", "rider", "restaurant"],
+>>>>>>> my-current-work
       default:null
     },
   },

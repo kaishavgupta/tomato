@@ -1,9 +1,18 @@
+<<<<<<< HEAD
 import express  from "express";
 import { addUserRole, user_profile, userLogin } from "../controller/user.controller.js";
 import { isAuth } from "../middleware/isAuth.js";
 
 
 const routes = express.Router();
+=======
+import {Router}  from "express";
+import { addUserRole, user_profile, userLogin } from "../controller/user.controller.js";
+import { isAuth } from "../middleware/isAuth.middleware.js";
+
+
+const routes = Router();
+>>>>>>> my-current-work
 
 // use direct http verb method to avoid any prototype-binding edge cases
 routes.post('/login', userLogin);

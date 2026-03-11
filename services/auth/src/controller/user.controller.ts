@@ -1,7 +1,12 @@
 import { Request, response, Response } from "express";
 import { IUser, user_Model } from "../model/User.model.js";
+<<<<<<< HEAD
 import TryCatch from "../middleware/tryCatch.js";
 import { AuthenticatedRequest } from "../middleware/isAuth.js";
+=======
+import TryCatch from "../middleware/tryCatch.middleware.js";
+import { AuthenticatedRequest } from "../middleware/isAuth.middleware.js";
+>>>>>>> my-current-work
 import { updateTokenSetCookie } from "../middleware/updateToken.js";
 import {oauth2client} from "../config/google.config.js"
 import axios from "axios";
@@ -43,7 +48,11 @@ export const userLogin = TryCatch(async (req: Request, res: Response) => {
   });
 });
 
+<<<<<<< HEAD
 const roles = ["user", "resturant", "rider"] as const;
+=======
+const roles = ["user", "restaurant", "rider"] as const;
+>>>>>>> my-current-work
 type Role = (typeof roles)[number];
 
 export const addUserRole = TryCatch(

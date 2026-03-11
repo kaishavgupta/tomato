@@ -1,0 +1,35 @@
+{
+  "name": "tomato",
+  "version": "1.0.0",
+  "description": "[![React](https://img.shields.io/badge/Frontend-React%20%2B%20TS-61DAFB?logo=react)](https://reactjs.org/)\r [![Express](https://img.shields.io/badge/Backend-Express.js-000000?logo=express)](https://expressjs.com/)\r [![MongoDB](https://img.shields.io/badge/Database-MongoDB-47A248?logo=mongodb)](https://www.mongodb.com/)",
+  "main": "index.js",
+  "scripts": {
+    "dev": "cd "
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/kaishavgupta/tomato.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "module",
+  "bugs": {
+    "url": "https://github.com/kaishavgupta/tomato/issues"
+  },
+  "homepage": "https://github.com/kaishavgupta/tomato#readme",
+  "devDependencies": {
+    "@types/express": "^5.0.6",
+    "@types/mongoose": "^5.11.96",
+    "@types/multer": "^2.1.0",
+    "axios": "^1.13.6",
+    "datauri": "^4.1.0",
+    "dotenv": "^17.3.1"
+  },
+  "dependencies": {
+    "cookie-parser": "^1.4.7",
+    "express": "^5.2.1",
+    "mongoose": "^9.2.4",
+    "multer": "^2.1.1"
+  }
+}

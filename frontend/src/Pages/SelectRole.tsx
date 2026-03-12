@@ -1,6 +1,7 @@
 import { use, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { AppContext } from "../context/AppProvider";
+import { roleHome } from "../components/ProtectedRoute";
 
 // Add these to your index.css or global CSS:
 // @import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@300;400;500;600&display=swap');
@@ -55,12 +56,10 @@ const SelectRole = () => {
   const [selected, setSelected] = useState<Role | null>(null);
 const navigate =useNavigate();
   const handleSubmit = async () => {
-    if (!selected) return;
+    if (!selected || !roleMutation) return;
      roleMutation.mutate(selected, {
-      onSuccess: () => {
-        navigate("/");
-      },
-    });
+    onSuccess: () => navigate(roleHome(selected)), // ✅ role-aware redirect
+  });
   };
 
   const selectedLabel = roles.find((r) => r.role === selected)?.label;

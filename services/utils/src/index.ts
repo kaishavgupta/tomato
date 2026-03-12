@@ -2,7 +2,7 @@ import express  from "express";
 import dotenv from "dotenv"
 import cloudinary from "cloudinary"
 import cors from 'cors';
-import uploadRoutes from "./routes/cloudinary.routes";
+import uploadRoutes from "./routes/cloudinary.routes.js";
 
 dotenv.config()
 

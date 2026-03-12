@@ -1,9 +1,6 @@
-<<<<<<< HEAD
-import { createContext } from "react";
-=======
+
 import { createContext, useState } from "react";
->>>>>>> my-current-work
-import { add_role, fetch_User } from "../api/api";
+import { add_role, fetch_User } from "../api/api.user";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import type { apiInterfaceType, AppContextType, UserType } from "../type";
 import toast from "react-hot-toast";

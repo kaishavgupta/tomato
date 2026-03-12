@@ -8,44 +8,49 @@ enum role {
 }
 
 export interface IRestaurant extends Document {
-  name:string;
+  name: string;
   email: string;
-  phone:string;
-  description?:string;
-  ownerId:string;
+  phone: string;
+  description?: string;
+  ownerId: string;
   image: string;
-  role?: role|null;
-  isVerified:boolean;
+  role?: role | null;
+  isVerified: boolean;
 
-  autoLocation:{
-    type:"Point",
-    coordinates:[number,number]; //[longitude, latitude]
-    formatedAddress:string
+  autoLocation: {
+    type: "Point";
+    coordinates: [number, number]; //[longitude, latitude]
+    formatedAddress: string;
   };
-  isOpen:boolean;
-  createdAt:Date;
-  generateToken:()=>string;
+  isOpen: boolean;
+  createdAt: Date;
+  generateToken: () => string;
 }
 
 const RestaurantSchema: Schema<IRestaurant> = new Schema(
   {
-    name:{
-      type:String,
-      required:true
+    ownerId: {
+  type: Schema.Types.ObjectId,
+  ref: "user",
+  required: true,
+},
+    name: {
+      type: String,
+      required: true,
     },
     email: {
       type: String,
-      unique:true,
+      unique: true,
       required: true,
     },
-    phone:{
-      type:String,
-      unique:true,
-      required:true
+    phone: {
+      type: String,
+      unique: true,
+      required: true,
     },
-    description:{
-      type:String,
-      trim:true,
+    description: {
+      type: String,
+      trim: true,
     },
     image: {
       type: String,
@@ -54,29 +59,29 @@ const RestaurantSchema: Schema<IRestaurant> = new Schema(
     role: {
       type: String,
       enum: ["user", "rider", "restaurant"],
-      default:null
+      default: null,
     },
-    isVerified:{
-      type:Boolean,
-      default:false,
-      required:true,
+    isVerified: {
+      type: Boolean,
+      default: false,
+      required: true,
     },
-    isOpen:{
-      type:Boolean,
-      default:false,
-      required:true,
+    isOpen: {
+      type: Boolean,
+      default: false,
+      required: true,
     },
-    autoLocation:{
-      type:{
-        type:String,
-        enum:["point"],
-          required:true
+    autoLocation: {
+      type: {
+        type: String,
+        enum: ["Point"],
+        required: true,
       },
-      coordinates:{
-        type:[Number],
-        required:true
+      coordinates: {
+        type: [Number],
+        required: true,
       },
-      formatedAddress:{type:String}
+      formatedAddress: { type: String },
     },
   },
   {
@@ -84,18 +89,25 @@ const RestaurantSchema: Schema<IRestaurant> = new Schema(
   },
 );
 
-RestaurantSchema.index({autoLocation:"2dsphere"});
+RestaurantSchema.index({ autoLocation: "2dsphere" });
 
-RestaurantSchema.methods.generateToken=function(){
+RestaurantSchema.methods.generateToken = function () {
   try {
-    const signature=process.env.JWT_SECRET as string
-     const token =  jwt.sign({user:this.role,id:this._id},signature,{
-        expiresIn:'15d'
-    });
-    return token
+    const signature = process.env.JWT_SECRET as string;
+    const token = jwt.sign(
+      { user: "restaurant", restaurant_id: this._id, id: this.ownerId },
+      signature,
+      {
+        expiresIn: "15d",
+      },
+    );
+    return token;
   } catch (error) {
     console.log(error);
   }
-}
+};
 
-export const restaurant_Model = mongoose.model<IRestaurant>("restaurant", RestaurantSchema);
+export const restaurant_Model = mongoose.model<IRestaurant>(
+  "restaurant",
+  RestaurantSchema,
+);

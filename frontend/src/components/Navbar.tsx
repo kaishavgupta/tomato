@@ -1,11 +1,11 @@
 import { use, useState } from "react";
 import { NavLink, useNavigate } from "react-router-dom";
 import { AppContext } from "../context/AppProvider";
-import { authService } from "../api/api";
+import { authService } from "../api/api.user";
 import { useQueryClient } from "@tanstack/react-query";
 import toast from "react-hot-toast";
 import { FiSearch, FiMapPin, FiShoppingCart, FiChevronDown } from "react-icons/fi";
-import { useUserLocation } from "../hooks/useUserLocation";
+import { useUserLocation } from "../Hooks/useUserLocation";
 
 const Navbar = () => {
   const context = use(AppContext);
@@ -34,6 +34,7 @@ const Navbar = () => {
     { label: "Orders", to: "/orders" },
     { label: "Track",  to: "/track" },
   ];
+console.log(residential);
 
   // City label shown in the pill
   const cityLabel = permissionDenied

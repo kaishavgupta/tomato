@@ -2,33 +2,28 @@ import jwt from "jsonwebtoken";
 import mongoose, { Document, Schema } from "mongoose";
 
 enum role {
-  user = "user",
-  rider = "rider",
-<<<<<<< HEAD
-  resturant = "resturant",
-=======
-  restaurant = "restaurant",
->>>>>>> my-current-work
+  "user",
+  "rider",
+  "restaurant",
 }
 
 export interface IUser extends Document {
-  name:string;
+  name: string;
   email: string;
   image: string;
-  role?: role|null;
-  generateToken:()=>string;
-
+  role?: role | null;
+  generateToken: () => string;
 }
 
 const UserSchema: Schema<IUser> = new Schema(
   {
-    name:{
-      type:String,
-      required:true
+    name: {
+      type: String,
+      required: true,
     },
     email: {
       type: String,
-      unique:true,
+      unique: true,
       required: true,
     },
     image: {
@@ -37,12 +32,9 @@ const UserSchema: Schema<IUser> = new Schema(
     },
     role: {
       type: String,
-<<<<<<< HEAD
-      enum: ["user", "rider", "resturant"],
-=======
+
       enum: ["user", "rider", "restaurant"],
->>>>>>> my-current-work
-      default:null
+      default: null,
     },
   },
   {
@@ -50,16 +42,16 @@ const UserSchema: Schema<IUser> = new Schema(
   },
 );
 
-UserSchema.methods.generateToken=function(){
+UserSchema.methods.generateToken = function () {
   try {
-    const signature=process.env.JWT_SECRET as string
-     const token =  jwt.sign({user:this.role,id:this._id},signature,{
-        expiresIn:'15d'
+    const signature = process.env.JWT_SECRET as string;
+    const token = jwt.sign({ user: this.role, id: this._id }, signature, {
+      expiresIn: "15d",
     });
-    return token
+    return token;
   } catch (error) {
     console.log(error);
   }
-}
+};
 
 export const user_Model = mongoose.model<IUser>("user", UserSchema);

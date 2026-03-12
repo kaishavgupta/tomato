@@ -7,6 +7,7 @@ export interface IUser {
   email?: string;
   image?: string;
   role: string;
+  restaurant_id:string;
 }
 
 export interface AuthenticatedRequest extends Request {
@@ -19,7 +20,7 @@ export const isAuth = async (
   next: NextFunction,
 ): Promise<void> => {
   try {
-    const token = req.cookies?.Tomato_restaurant as string;
+    const token = req.cookies?.Tomato_user as string;
     if (!token) {
       res.status(401).json({
         success: false,
@@ -42,12 +43,13 @@ export const isAuth = async (
       process.env.JWT_SECRET as string,
     ) as JwtPayload;
     req.user = {
-      _id: decodeUser.id,
+      _id: decodeUser.id, //user id,
+      restaurant_id: decodeUser.restaurant_id,
       role: decodeUser.user,
     };
     next();
   } catch (error) {
-    console.log(error);
+    res.status(401).json({ success: false, msg: "Invalid or expired token" });
   }
 };
 

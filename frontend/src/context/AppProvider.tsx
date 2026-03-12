@@ -1,11 +1,9 @@
 
-import { createContext, useState } from "react";
 import { add_role, fetch_User } from "../api/api.user";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import type { apiInterfaceType, AppContextType, UserType } from "../type";
+import { AppContext, type apiInterfaceType, type UserType } from "../types/user.type";
 import toast from "react-hot-toast";
 
-export const AppContext = createContext<AppContextType | undefined>(undefined);
 
 export const AppProvider = ({ children }: apiInterfaceType) => {
   const queryClient = useQueryClient();
@@ -13,8 +11,8 @@ export const AppProvider = ({ children }: apiInterfaceType) => {
   const { data, isLoading, isError } = useQuery<UserType>({
     queryKey: ["user"],
     queryFn: fetch_User,
-    staleTime: 1000 * 60 * 5,        // ✅ cache for 5 min — no refetch on every visit
-    retry: false,                      // ✅ don't retry on 401 — unauthenticated is expected
+    staleTime: 1000 * 60 * 5,        
+    retry: false,                      
   });
 
   const roleMutation = useMutation({
@@ -32,7 +30,7 @@ export const AppProvider = ({ children }: apiInterfaceType) => {
   return (
     <AppContext.Provider value={{
       userData: data?.msg,
-      isauth: data?.success,
+      isauth: data?.success as boolean,
       isLoading,
       isError,
       roleMutation,

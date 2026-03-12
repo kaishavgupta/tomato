@@ -7,7 +7,7 @@ export interface IUser {
   email?: string;
   image?: string;
   role: string;
-  restaurant_id:string;
+  restaurant_id?:string;
 }
 
 export interface AuthenticatedRequest extends Request {
@@ -21,6 +21,7 @@ export const isAuth = async (
 ): Promise<void> => {
   try {
     const token = req.cookies?.Tomato_user as string;
+    
     if (!token) {
       res.status(401).json({
         success: false,
@@ -29,7 +30,8 @@ export const isAuth = async (
       return;
     }
     const parts = token.split(" ");
-
+    // console.log("from 33",parts);
+    
     if (parts[0] !== "Bearer") {
       res.status(401).json({
         success: false,
@@ -38,13 +40,15 @@ export const isAuth = async (
       });
       return;
     }
+    
     const decodeUser = jwt.verify(
       token.split(" ")[1] as string,
       process.env.JWT_SECRET as string,
     ) as JwtPayload;
+    
     req.user = {
-      _id: decodeUser.id, //user id,
-      restaurant_id: decodeUser.restaurant_id,
+      _id: decodeUser.id,
+      restaurant_id:decodeUser.restaurant_id,
       role: decodeUser.user,
     };
     next();

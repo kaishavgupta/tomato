@@ -1,6 +1,6 @@
 import { use, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { AppContext } from "../context/AppProvider";
+import { AppContext } from "../types/user.type";
 import { roleHome } from "../components/ProtectedRoute";
 
 // Add these to your index.css or global CSS:

@@ -108,7 +108,7 @@ export const fetchmyRestaurant = TryCatch(
 
     return res.status(400).json({
       success: false,
-      msg: "Invalid Restaurant",
+      msg: "Invalid Restaurant or restaurant not found",
     });
 
   },

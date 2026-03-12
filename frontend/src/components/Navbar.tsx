@@ -1,6 +1,6 @@
 import { use, useState } from "react";
 import { NavLink, useNavigate } from "react-router-dom";
-import { AppContext } from "../context/AppProvider";
+import { AppContext } from "../types/user.type";
 import { authService } from "../api/api.user";
 import { useQueryClient } from "@tanstack/react-query";
 import toast from "react-hot-toast";

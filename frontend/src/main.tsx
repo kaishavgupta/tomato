@@ -12,6 +12,7 @@ createRoot(document.getElementById('root')!).render(
     <GoogleOAuthProvider clientId={clientId}>
       <QueryClientProvider client={queryClient}>
       <AppProvider>
+        
       <App />
       </AppProvider>
       </QueryClientProvider>

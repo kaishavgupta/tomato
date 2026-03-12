@@ -1,5 +1,5 @@
 import { use } from 'react'
-import { AppContext } from '../context/AppProvider'
+import { AppContext } from '../types/user.type'
 import { Navigate, Outlet, useLocation } from 'react-router-dom';
 
 const ProtectedRoute = () => {

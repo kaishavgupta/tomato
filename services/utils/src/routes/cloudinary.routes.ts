@@ -8,8 +8,8 @@ routes.route("/upload").post(async (req, res) => {
     const {buffer} =req.body;
     const cloud=await cloudinary.uploader
       .upload(buffer)
-      .then((result) => console.log(result));
-
+      .then((result) => result);
+      
       res.json({url:cloud.secure_url})
 
   } catch (error) {

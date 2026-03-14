@@ -9,12 +9,15 @@ import Layout from "./components/Layout";
 import Menu from "./Pages/User/Menu";
 import Track from "./Pages/User/Track";
 import Order from "./Pages/User/Order";
-import Restaurant from "./Pages/Restaurant/Restaurant";
 import RestaurantMenu from "./Pages/Restaurant/RestaurantMenu";
 import RestaurantOrders from "./Pages/Restaurant/RestaurantOrders";
 import RiderHome from "./Pages/Rider/RiderHome";
 import RiderDeliveries from "./Pages/Rider/RiderDeliveries";
 import Cart from "./Pages/User/Cart";
+import CreateRestaurant from "./Pages/Restaurant/CreateRestaurant";
+import RestaurentAnalytics from "./Pages/Restaurant/RestaurentAnalytics";
+import RestaurentSettings from "./Pages/Restaurant/RestaurentSettings";
+import RestaurantDashboard from "./Pages/Restaurant/RestaurantDashboard";
 const App = () => {
 const router = createBrowserRouter([
   {
@@ -35,9 +38,12 @@ const router = createBrowserRouter([
           { path: "/cart",    element: <Cart /> },
 
           // ── restaurant routes ──
-          { path: "/restaurant",         element: <Restaurant /> },
+          { path: "/restaurant",         element: <RestaurantDashboard /> },
           { path: "/restaurant/menu",    element: <RestaurantMenu /> },
           { path: "/restaurant/orders",  element: <RestaurantOrders /> },
+          { path: "/restaurant/create",  element: <CreateRestaurant /> },
+          { path: "/restaurant/analytics",  element: <RestaurentAnalytics /> },
+          { path: "/restaurant/settings",  element: <RestaurentSettings /> },
 
           // ── rider routes ──
           { path: "/rider",              element: <RiderHome /> },

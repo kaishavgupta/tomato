@@ -3,8 +3,9 @@ import getBuffer from "../config/datauri.js";
 import { AuthenticatedRequest } from "../middleware/isauth.middleware.js";
 import TryCatch from "../middleware/tryCatch.middleware.js";
 import { restaurant_Model } from "../model/restaurant.model.js";
+import { log } from "console";
 
-export const loginResturant = TryCatch(
+export const loginCreateResturant = TryCatch(
   async (req: AuthenticatedRequest, res) => {
     const user = req.user;
 
@@ -27,8 +28,15 @@ export const loginResturant = TryCatch(
       });
     }
 
-    const { name, email , description, latitude, longitude, formatedAddress, phone } =
-      req.body;
+    const {
+      name,
+      email,
+      description,
+      latitude,
+      longitude,
+      formatedAddress,
+      phone,
+    } = req.body;
 
     if (!name || !latitude || !longitude || !phone || !email) {
       return res.status(400).json({
@@ -54,19 +62,21 @@ export const loginResturant = TryCatch(
       });
     }
 
-    const { data: uploadResult } = await axios.post(
+    const response = await axios.post(
       `${process.env.UTILS_SERVICE}/api/upload`,
       {
         buffer: fileBuffer.content,
       },
     );
 
-    const restaurant_created =await restaurant_Model.create({
+    console.log(response.data);
+
+    const restaurant_created = await restaurant_Model.create({
       name,
       email,
       description,
       phone,
-      image: uploadResult.url,
+      image: response.data.url,
       ownerId: user._id,
       autoLocation: {
         type: "Point",
@@ -75,7 +85,7 @@ export const loginResturant = TryCatch(
       },
     });
     const token = await restaurant_created.generateToken();
-    res.cookie("Tomato_user", token, {
+    res.cookie("Tomato_user", `Bearer ${token}`, {
       maxAge: 90000000,
       httpOnly: true,
       sameSite: "lax",
@@ -89,12 +99,12 @@ export const loginResturant = TryCatch(
 
 export const fetchmyRestaurant = TryCatch(
   async (req: AuthenticatedRequest, res) => {
-    // pull the id first and bail out if the user is missing
     const id = req.user?._id;
+
     if (!id) {
       return res.status(401).json({
-        success: false,
-        msg: "Unauthorized user",
+        success: true,
+        msg: "Unauthorized user or Restaurant not created",
       });
     }
 
@@ -110,6 +120,49 @@ export const fetchmyRestaurant = TryCatch(
       success: false,
       msg: "Invalid Restaurant or restaurant not found",
     });
+  },
+);
 
+export const openRestaurant = TryCatch(
+  async (req: AuthenticatedRequest, res) => {
+    
+    const { open } = req.body;
+    const restaurant_id = req.user?.restaurant_id;
+
+    const findResturant = await restaurant_Model.findById(restaurant_id);
+
+    if (!findResturant) {
+      return res.status(401).json({
+        success: false,
+        msg: "Restaurant Not found",
+      });
+    }
+
+    // If restaurant is not verified
+    if (!findResturant.isVerified) {
+      return res.status(401).json({
+        success: false,
+        msg: "Your Restaurant is not verified yet",
+      });
+
+    }
+    const openClose = await restaurant_Model.findByIdAndUpdate(
+      restaurant_id,
+      { isOpen: open },
+      { new: true, runValidators: true },
+    );
+
+    if(openClose?.isOpen){
+      return res.status(200).json({
+        success:true,
+        msg:"Your restaurant is Open Now"
+      })}
+
+    else{
+      return res.status(200).json({
+        success:true,
+        msg:"Your restaurant is Closed Now"
+      })
+    }
   },
 );

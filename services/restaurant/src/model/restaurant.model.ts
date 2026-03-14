@@ -7,6 +7,18 @@ enum role {
   restaurant = "restaurant",
 }
 
+enum cusiene{
+ Indian= "Indian",
+Chinese="Chinese",
+Italian="Italian",
+Mexican="Mexican",
+Japanese="Japanese",
+Thai="Thai",
+American="American",
+Mediterranean="Mediterranean",
+Korean="Korean",
+}
+
 export interface IRestaurant extends Document {
   name: string;
   email: string;
@@ -15,6 +27,7 @@ export interface IRestaurant extends Document {
   ownerId: string;
   image: string;
   role?: role | null;
+  cusiene?:cusiene;
   isVerified: boolean;
 
   autoLocation: {
@@ -60,6 +73,11 @@ const RestaurantSchema: Schema<IRestaurant> = new Schema(
       type: String,
       enum: ["user", "rider", "restaurant"],
       default: null,
+    },
+    cusiene:{
+      type:String,
+      enum:["Indian","Chinese","Italian","Mexican","Japanese","Thai","American","Mediterranean","Korean"],
+      required:false
     },
     isVerified: {
       type: Boolean,

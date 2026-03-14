@@ -1,13 +1,15 @@
 import { use } from 'react'
 import { AppContext } from '../types/user.type'
 import { Navigate, Outlet, useLocation } from 'react-router-dom';
+import { useRestaurant } from '../Hooks/useRestaurant';
 
 const ProtectedRoute = () => {
   const { userData, isauth, isLoading } = use(AppContext);
+  const {isRestaurant}=useRestaurant
   const role = userData?.role;
 
   const location = useLocation();
-  const RESTAURANT_PATHS = ["/restaurant", "/restaurant/menu", "/restaurant/orders"];
+  const RESTAURANT_PATHS = ["/restaurant", "/restaurant/menu", "/restaurant/orders" , "/restaurant/create"];
   const USER_PATHS       = ["/", "/menu", "/orders", "/track", "/cart"];
   const RIDER_PATHS      = ["/rider", "/rider/deliveries"];
   // ✅ Show a minimal branded spinner instead of blank screen
@@ -35,8 +37,13 @@ const ProtectedRoute = () => {
     return <Navigate to={roleHome(role)} replace />;
 
   // if role is restaurant redirects to restaurant routes only
-   if (role === "restaurant" && [...USER_PATHS,...RIDER_PATHS].includes(location.pathname))
+   if (role === "restaurant" && [...USER_PATHS,...RIDER_PATHS].includes(location.pathname)){
+    if(!(isRestaurant)){
+      return <Navigate to="/restaurant/create" replace />;
+    }
+    else if(isauth)
     return <Navigate to="/restaurant" replace />;
+  }
 
    // If trying to access restaurant pages → redirect to user home
   if (role === "user" && [...RESTAURANT_PATHS,...RIDER_PATHS].includes(location.pathname))

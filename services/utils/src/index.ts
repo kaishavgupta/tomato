@@ -12,6 +12,13 @@ app.use(cors());
 
 app. use(express. json({ limit: "50mb" }));
 app.use(express. urlencoded({ limit: "50mb", extended: true }) );
+// index.ts — add this after all app.use() route registrations
+app.use((err: any, req: express.Request, res: express.Response, next: express.NextFunction) => {
+  console.error("Global error handler:", err.stack);
+  if (!res.headersSent) {
+    res.status(500).json({ success: false, message: err.message });
+  }
+});
 
 const PORT = process.env.PORT || 3005;
 

@@ -1,5 +1,6 @@
 import { Response, NextFunction, Request, json } from "express";
 import jwt, { JwtPayload } from "jsonwebtoken";
+import { IMenu } from "../model/menu.model";
 
 export interface IUser {
   _id: string;
@@ -57,12 +58,22 @@ export const isAuth = async (
   }
 };
 
+
 export const isRestaurant = async (
   req: AuthenticatedRequest,
   res: Response,
   next: NextFunction,
 ): Promise<void> => {
   const role = req?.user?.role;
+  const restaurantId = req.user?.restaurant_id;
+
+  if (!restaurantId) {
+    res.status(403).json({
+      success: false,
+      msg: "Restaurant profile not created yet",
+    });
+    return;
+  }
 
   if (role !== "restaurant") {
     res.status(401).json({
@@ -70,7 +81,7 @@ export const isRestaurant = async (
       msg: "You are Unauthorized seller",
     });
     return;
-  } else {
-    next();
   }
+
+  next();
 };

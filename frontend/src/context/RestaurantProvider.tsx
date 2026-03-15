@@ -3,7 +3,10 @@ import type { apiInterfaceType } from "../types/user.type";
 import {
   close_Restaurant,
   create_restaurant,
+  delete_Restaurant,
   fetch_Myrestaurant,
+  pause_Restaurent,
+  update_Restaurant,
 } from "../api/api.restaurant";
 import {
   RestaurantContext,
@@ -56,6 +59,46 @@ export const RestaurantProvider = ({ children }: apiInterfaceType) => {
     },
   });
 
+  const mutateupdateRestaurant=useMutation({
+    mutationFn:update_Restaurant,
+     onSuccess: () => {
+      setIsOpen((e: boolean) => !e);
+      queryClient.invalidateQueries({ queryKey: ["restaurant"] });
+      toast.success("Restaurant updated successfully!");
+    },
+    onError: (error:ErrorType) => {
+      toast.error(error?.msg);
+      // toast.error(message);
+    },
+  })
+
+  const pauseRestaurent=useMutation({
+    mutationFn:pause_Restaurent,
+    onSuccess: (v) => {
+      setIsOpen((e: boolean) => !e);
+      queryClient.invalidateQueries({ queryKey: ["restaurant"] });
+      toast.success(v.msg);
+    },
+    onError: (error:ErrorType) => {
+      toast.error(error?.msg);
+      // toast.error(message);
+    },
+  })
+
+  const mutatedeleteRestaurant=useMutation({
+    mutationFn:delete_Restaurant,
+    onSuccess: () => {
+      setIsOpen((e: boolean) => !e);
+      queryClient.invalidateQueries({ queryKey: ["restaurant"] });
+      queryClient.clear();
+      toast.success("Your Restaurant is successfully Deleted!");
+    },
+    onError: (error:ErrorType) => {
+      toast.error(error?.msg);
+      // toast.error(message);
+    },
+  })
+
   const errorMessage = error?.msg || error?.message || "An error occurred";
 
   // ✅ Restaurant exists only when backend confirmed success with a doc
@@ -80,6 +123,9 @@ export const RestaurantProvider = ({ children }: apiInterfaceType) => {
         createMutation,
         setOpenClose,
         isOpen,
+        mutateupdateRestaurant,
+        mutatedeleteRestaurant,
+        pauseRestaurent
       }}
     >
       {children}

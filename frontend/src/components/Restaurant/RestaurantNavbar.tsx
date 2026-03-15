@@ -170,7 +170,7 @@ const RestaurantNavbar = () => {
                   {/* restaurant image > user avatar > initial */}
                   {restaurantData?.image ? (
                     <img
-                      src={restaurantData.image}
+                      src={restaurantData.image?.url || userData.image}
                       alt={restaurantData.name}
                       className="w-8 h-8 rounded-xl object-cover"
                     />
@@ -437,7 +437,7 @@ const RestaurantNavbar = () => {
 
             {/* mobile open toggle (shown in status bar on mobile) */}
             <button
-              onClick={() => setIsOpen((v) => !v)}
+              onClick={() => setOpenClose.mutate(!isOpen)}
               className="md:hidden flex items-center gap-1.5 px-2.5 py-1 rounded-xl text-[11px] font-bold uppercase tracking-widest"
               style={{
                 background: isOpen
@@ -483,7 +483,7 @@ const RestaurantNavbar = () => {
             >
               {restaurantData?.image ? (
                 <img
-                  src={restaurantData.image}
+                  src={restaurantData.image?.url}
                   alt={restaurantData.name}
                   className="w-10 h-10 rounded-xl object-cover flex-shrink-0"
                 />

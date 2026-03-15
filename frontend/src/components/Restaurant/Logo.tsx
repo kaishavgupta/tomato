@@ -3,10 +3,11 @@ import useUser from "../../Hooks/useUser";
 
 const Logo = () => {
   const { userData } = useUser();
+  
   return (
     <NavLink
       to="/restaurant"
-      className="flex items-center gap-2 select-none flex-shrink-0"
+      className="flex items-center gap-2 select-none shrink-0"
       style={{ textDecoration: "none" }}
     >
       <span
@@ -15,7 +16,7 @@ const Logo = () => {
       >
         🍅
       </span>
-      {userData.role!="user" ?
+      {userData?.role && userData.role !== "user" ?
         <div className="flex flex-col leading-none">
           <span
             className="text-2xl tracking-widest"
@@ -31,7 +32,7 @@ const Logo = () => {
             className="text-[9px] font-bold uppercase tracking-[0.18em]"
             style={{ color: "#FF6B35", lineHeight: 1, marginTop: 1 }}
           >
-            {userData.role}
+            {userData?.role}
           </span>
         </div>:<></>
       }

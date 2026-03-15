@@ -1,5 +1,5 @@
 import { use, useState } from "react";
-import { NavLink, useNavigate } from "react-router-dom";
+import { NavLink, useLocation, useNavigate } from "react-router-dom";
 import { AppContext } from "../types/user.type";
 import { authService } from "../api/api.user";
 import { useQueryClient } from "@tanstack/react-query";
@@ -24,6 +24,7 @@ const Navbar = () => {
   const [avatarErr, setAvatarErr] = useState(false);
   const [search, setSearch] = useState("");
   const navigate = useNavigate();
+  const pathlocation=useLocation()
   const queryClient = useQueryClient();
 
   // ✅ location hook — auto-requests permission and fetches city
@@ -54,7 +55,7 @@ const Navbar = () => {
       ? "Detecting..."
       : `${residential} ${cityName}`;
 
-  if (isRestaurantExist) {
+  if (isRestaurantExist || pathlocation.pathname === "/restaurant/create") {
     return <RestaurantNavbar />;
   }
   return (

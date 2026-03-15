@@ -1,5 +1,5 @@
 import jwt from "jsonwebtoken";
-import mongoose, { Document, Schema } from "mongoose";
+import mongoose, { Document, Schema, Types } from "mongoose";
 
 enum role {
   user = "user",
@@ -7,16 +7,16 @@ enum role {
   restaurant = "restaurant",
 }
 
-enum cusiene{
- Indian= "Indian",
-Chinese="Chinese",
-Italian="Italian",
-Mexican="Mexican",
-Japanese="Japanese",
-Thai="Thai",
-American="American",
-Mediterranean="Mediterranean",
-Korean="Korean",
+enum cusiene {
+  Indian = "Indian",
+  Chinese = "Chinese",
+  Italian = "Italian",
+  Mexican = "Mexican",
+  Japanese = "Japanese",
+  Thai = "Thai",
+  American = "American",
+  Mediterranean = "Mediterranean",
+  Korean = "Korean",
 }
 
 export interface IRestaurant extends Document {
@@ -24,10 +24,10 @@ export interface IRestaurant extends Document {
   email: string;
   phone: string;
   description?: string;
-  ownerId: string;
-  image: string;
+  ownerId: Types.ObjectId;
+  image: { url: string; public_id: string };
   role?: role | null;
-  cusiene?:cusiene;
+  cusiene?: cusiene;
   isVerified: boolean;
 
   autoLocation: {
@@ -35,6 +35,7 @@ export interface IRestaurant extends Document {
     coordinates: [number, number]; //[longitude, latitude]
     formatedAddress: string;
   };
+  pauseRestaurent:boolean
   isOpen: boolean;
   createdAt: Date;
   generateToken: () => string;
@@ -43,10 +44,10 @@ export interface IRestaurant extends Document {
 const RestaurantSchema: Schema<IRestaurant> = new Schema(
   {
     ownerId: {
-  type: Schema.Types.ObjectId,
-  ref: "user",
-  required: true,
-},
+      type: Schema.Types.ObjectId,
+      ref: "user",
+      required: true,
+    },
     name: {
       type: String,
       required: true,
@@ -66,20 +67,41 @@ const RestaurantSchema: Schema<IRestaurant> = new Schema(
       trim: true,
     },
     image: {
-      type: String,
-      required: true,
+      url: {
+        type: String,
+        required: true,
+      },
+      public_id: {
+        type: String,
+        required: true,
+      },
     },
     role: {
       type: String,
       enum: ["user", "rider", "restaurant"],
       default: null,
     },
-    cusiene:{
-      type:String,
-      enum:["Indian","Chinese","Italian","Mexican","Japanese","Thai","American","Mediterranean","Korean"],
-      required:false
+    cusiene: {
+      type: String,
+      enum: [
+        "Indian",
+        "Chinese",
+        "Italian",
+        "Mexican",
+        "Japanese",
+        "Thai",
+        "American",
+        "Mediterranean",
+        "Korean",
+      ],
+      required: false,
     },
     isVerified: {
+      type: Boolean,
+      default: false,
+      required: true,
+    },
+    pauseRestaurent:{
       type: Boolean,
       default: false,
       required: true,
@@ -114,6 +136,21 @@ RestaurantSchema.methods.generateToken = function () {
     const signature = process.env.JWT_SECRET as string;
     const token = jwt.sign(
       { user: "restaurant", restaurant_id: this._id, id: this.ownerId },
+      signature,
+      {
+        expiresIn: "15d",
+      },
+    );
+    return token;
+  } catch (error) {
+    console.log(error);
+  }
+};
+RestaurantSchema.methods.generateTokenDelete = function () {
+  try {
+    const signature = process.env.JWT_SECRET as string;
+    const token = jwt.sign(
+      { user: "restaurant", id: this.ownerId },
       signature,
       {
         expiresIn: "15d",

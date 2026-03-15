@@ -5,61 +5,88 @@ import { useRestaurant } from '../Hooks/useRestaurant';
 
 const ProtectedRoute = () => {
   const { userData, isauth, isLoading } = use(AppContext);
-  const {isRestaurant}=useRestaurant
-  const role = userData?.role;
 
+  // ✅ FIX: was `useRestaurant` (missing parentheses — hook was never called)
+  // ✅ FIX: use isRestaurantExist (the correct context value name)
+  const { isRestaurantExist, isLoading: isRestaurantLoading } = useRestaurant();
+
+  const role = userData?.role;
   const location = useLocation();
-  const RESTAURANT_PATHS = ["/restaurant", "/restaurant/menu", "/restaurant/orders" , "/restaurant/create"];
+
+  const RESTAURANT_PATHS = ["/restaurant", "/restaurant/menu", "/restaurant/orders"];
+  const CREATE_PATH      = "/restaurant/create";
   const USER_PATHS       = ["/", "/menu", "/orders", "/track", "/cart"];
   const RIDER_PATHS      = ["/rider", "/rider/deliveries"];
-  // ✅ Show a minimal branded spinner instead of blank screen
-  if (isLoading) return (
-    <div className="min-h-screen flex items-center justify-center"
-      style={{ backgroundColor: "#FFF8F0" }}>
-      <div className="flex flex-col items-center gap-3">
-        <span className="text-4xl animate-bounce">🍅</span>
-        <p className="text-sm font-medium" style={{ color: "#E23774", fontFamily: "'DM Sans',sans-serif" }}>
-          Loading...
-        </p>
-      </div>
-    </div>
-  );
 
-  // Not Login
+  // ── loading guard ──────────────────────────────────────────────────────
+  // Wait for both user AND restaurant data before making routing decisions.
+  // Without this, isRestaurantExist is undefined on first render and causes
+  // a flash-redirect to /restaurant/create even for existing restaurants.
+  if (isLoading || (role === "restaurant" && isRestaurantLoading)) {
+    return (
+      <div
+        className="min-h-screen flex items-center justify-center"
+        style={{ backgroundColor: "#FFF8F0" }}
+      >
+        <div className="flex flex-col items-center gap-3">
+          <span className="text-4xl animate-bounce">🍅</span>
+          <p
+            className="text-sm font-medium"
+            style={{ color: "#E23774", fontFamily: "'DM Sans',sans-serif" }}
+          >
+            Loading...
+          </p>
+        </div>
+      </div>
+    );
+  }
+
+  // ── not logged in ──────────────────────────────────────────────────────
   if (!isauth) return <Navigate to="/login" replace />;
 
-  // login but no role and not at select-role page redirects to select-role
+  // ── no role yet ────────────────────────────────────────────────────────
+  // Logged in but role not selected → force to select-role
   if (userData?.role === null && location.pathname !== "/select-role")
     return <Navigate to="/select-role" replace />;
 
-  // if role selected and yet at select-role redirects to login page
+  // Already has a role → don't let them back to select-role
   if (userData?.role && location.pathname === "/select-role")
     return <Navigate to={roleHome(role)} replace />;
 
-  // if role is restaurant redirects to restaurant routes only
-   if (role === "restaurant" && [...USER_PATHS,...RIDER_PATHS].includes(location.pathname)){
-    if(!(isRestaurant)){
-      return <Navigate to="/restaurant/create" replace />;
+  // ── restaurant role ────────────────────────────────────────────────────
+  if (role === "restaurant") {
+
+    // Block user + rider routes entirely
+    if ([...USER_PATHS, ...RIDER_PATHS].includes(location.pathname))
+      return <Navigate to={isRestaurantExist ? "/restaurant" : CREATE_PATH} replace />;
+
+    if (!isRestaurantExist) {
+      // No restaurant yet → only /restaurant/create is allowed
+      // Trying to hit any other restaurant route → redirect to create
+      if (location.pathname !== CREATE_PATH)
+        return <Navigate to={CREATE_PATH} replace />;
+    } else {
+      // Restaurant exists → block /restaurant/create (nothing to create)
+      if (location.pathname === CREATE_PATH)
+        return <Navigate to="/restaurant" replace />;
     }
-    else if(isauth)
-    return <Navigate to="/restaurant" replace />;
   }
 
-   // If trying to access restaurant pages → redirect to user home
-  if (role === "user" && [...RESTAURANT_PATHS,...RIDER_PATHS].includes(location.pathname))
+  // ── user role ──────────────────────────────────────────────────────────
+  if (role === "user" && [...RESTAURANT_PATHS, CREATE_PATH, ...RIDER_PATHS].includes(location.pathname))
     return <Navigate to="/" replace />;
 
-  // if rider trying to access wrong pages
-  if (role === "rider" && [...USER_PATHS, ...RESTAURANT_PATHS].includes(location.pathname))
+  // ── rider role ─────────────────────────────────────────────────────────
+  if (role === "rider" && [...USER_PATHS, ...RESTAURANT_PATHS, CREATE_PATH].includes(location.pathname))
     return <Navigate to="/rider" replace />;
 
   return <Outlet />;
-}
+};
 
-export const roleHome = (role: string) => {
-  if (role === "restaurant") return "/restaurant"; 
-  if (role === "rider")     return "/rider";
-  return "/";  // user
-}
+export const roleHome = (role?: string | null) => {
+  if (role === "restaurant") return "/restaurant";
+  if (role === "rider")      return "/rider";
+  return "/";
+};
 
 export default ProtectedRoute;

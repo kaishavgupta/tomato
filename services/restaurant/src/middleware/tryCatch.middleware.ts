@@ -5,9 +5,9 @@ const TryCatch = (handler: RequestHandler): RequestHandler => {
     try {
       await handler(req, res, next);
     } catch (err: any) {
-      console.error("Error occured and thrown from tryCatch.ts",err.stack); 
-      res.status(500).json({ message: err.message });
+      next(err); // delegate to Express error handler, don't send directly
     }
   };
 };
-export default TryCatch
+
+export default TryCatch;

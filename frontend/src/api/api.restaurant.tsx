@@ -41,3 +41,37 @@ export const close_Restaurant=async(openClose:boolean)=>{
     throw error.response?.data || new Error("Network Error");
   }
 }
+
+export const update_Restaurant=async(formData:FormData)=>{
+  try {
+    const response = await restaurantService.patch(
+      "api/auth/restaurent_update",
+      formData,
+      { headers: { "Content-Type": "multipart/form-data" } }
+    );
+    return response.data;
+  } catch (error: any) {
+    throw error?.response?.data || new Error("Network Error");
+  }
+}
+
+
+export const delete_Restaurant=async(public_id:string)=>{
+  try {
+    const response=await restaurantService.delete(`api/auth/delete-restaurent/${public_id}`)
+    return response.data
+  } catch (error) {
+    throw error?.response?.data || new Error("Network Error");
+  }
+}
+
+export const pause_Restaurent=async(pauseRestaurent:boolean)=>{
+   try {
+    const response=await restaurantService.patch('api/auth/pause-Restaurent',{
+      pauseRestaurent
+    })
+    return response.data
+  } catch (error) {
+    throw error?.response?.data || new Error("Network Error");
+  }
+}

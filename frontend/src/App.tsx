@@ -9,15 +9,15 @@ import Layout from "./components/Layout";
 import Menu from "./Pages/User/Menu";
 import Track from "./Pages/User/Track";
 import Order from "./Pages/User/Order";
-import RestaurantMenu from "./Pages/Restaurant/RestaurantMenu";
-import RestaurantOrders from "./Pages/Restaurant/RestaurantOrders";
+import RestaurantMenu from "./Pages/Restaurant/Menu.restaurant";
+import RestaurantOrders from "./Pages/Restaurant/Orders.restaurant";
 import RiderHome from "./Pages/Rider/RiderHome";
 import RiderDeliveries from "./Pages/Rider/RiderDeliveries";
 import Cart from "./Pages/User/Cart";
 import CreateRestaurant from "./Pages/Restaurant/CreateRestaurant";
-import RestaurentAnalytics from "./Pages/Restaurant/RestaurentAnalytics";
-import RestaurentSettings from "./Pages/Restaurant/RestaurentSettings";
-import RestaurantDashboard from "./Pages/Restaurant/RestaurantDashboard";
+import RestaurentAnalytics from "./Pages/Restaurant/Analytics.restaurant";
+import RestaurentSettings from "./Pages/Restaurant/Settings.restaurant";
+import RestaurantDashboard from "./Pages/Restaurant/Dashboard.restaurant";
 const App = () => {
 const router = createBrowserRouter([
   {

@@ -1,22 +1,12 @@
 import { Router } from "express";
-import { v2 as cloudinary } from "cloudinary";
+import { deleteService, uploadService } from "../controller/cloudinary.controller.js";
 
 const routes = Router();
 
-routes.route("/upload").post(async (req, res) => {
-  try {
-    const {buffer} =req.body;
-    const cloud=await cloudinary.uploader
-      .upload(buffer)
-      .then((result) => result);
-      
-      res.json({url:cloud.secure_url})
+routes.route("/upload").post(uploadService);
 
-  } catch (error) {
+routes.route("/delete/:publicId").delete(deleteService);
 
-  }
-});
+const uploadRoutes = routes;
 
-const uploadRoutes=routes;
-
-export default uploadRoutes
+export default uploadRoutes;

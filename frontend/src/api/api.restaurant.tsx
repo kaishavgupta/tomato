@@ -9,7 +9,7 @@ export const restaurantService = axios.create({
 // ✅ restaurant index.ts mounts routes under /api/auth → /api/auth/my-restaurant
 export const fetch_Myrestaurant = async () => {
   try {
-    const response = await restaurantService.get("api/auth/my-restaurant");
+    const response = await restaurantService.get("api/restaurant/my-restaurant");
     return response.data;
   } catch (error: any) {
     throw error.response?.data || new Error("Network Error");
@@ -20,7 +20,7 @@ export const fetch_Myrestaurant = async () => {
 export const create_restaurant = async (formData: FormData) => {
   try {
     const response = await restaurantService.post(
-      "api/auth/new-restaurant",
+      "api/restaurant/new-restaurant",
       formData,
       { headers: { "Content-Type": "multipart/form-data" } }
     );
@@ -30,10 +30,9 @@ export const create_restaurant = async (formData: FormData) => {
   }
 };
 
-export const close_Restaurant=async(openClose:boolean)=>{
-  try {
-    const response=await restaurantService.post("api/auth/close-restaurant",openClose)
-    
+export const close_Restaurant=async(open:boolean)=>{
+  try {    
+    const response=await restaurantService.post(`api/restaurant/close-restaurant/?open=${open}`)
     return response.data
   } catch (error:any) {
     console.log(error);
@@ -42,10 +41,10 @@ export const close_Restaurant=async(openClose:boolean)=>{
   }
 }
 
-export const update_Restaurant=async(formData:FormData)=>{
+export const update_Restaurant=async(formData:FormData,public_id:string)=>{
   try {
     const response = await restaurantService.patch(
-      "api/auth/restaurent_update",
+      `api/restaurant/restaurent_update/${public_id}`,
       formData,
       { headers: { "Content-Type": "multipart/form-data" } }
     );
@@ -56,9 +55,10 @@ export const update_Restaurant=async(formData:FormData)=>{
 }
 
 
-export const delete_Restaurant=async(public_id:string)=>{
+export const delete_Restaurant=async()=>{
   try {
-    const response=await restaurantService.delete(`api/auth/delete-restaurent/${public_id}`)
+    
+    const response = await restaurantService.delete(`api/restaurant/delete-restaurent`)
     return response.data
   } catch (error) {
     throw error?.response?.data || new Error("Network Error");
@@ -67,7 +67,7 @@ export const delete_Restaurant=async(public_id:string)=>{
 
 export const pause_Restaurent=async(pauseRestaurent:boolean)=>{
    try {
-    const response=await restaurantService.patch('api/auth/pause-Restaurent',{
+    const response=await restaurantService.patch('api/restaurant/pause-Restaurent',{
       pauseRestaurent
     })
     return response.data

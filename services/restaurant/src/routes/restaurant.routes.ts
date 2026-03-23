@@ -8,8 +8,9 @@ const routes=Router();
 routes.route('/new-restaurant').post(isAuth,uploadFile,loginCreateResturant)
 routes.route('/my-restaurant').get(isAuth, fetchmyRestaurant)
 routes.route('/close-restaurant').post(isAuth, isRestaurant,openRestaurant)
-routes.route('/restaurent_update').patch(isAuth, isRestaurant,uploadFile,edit_Restaurant)
-routes.route('/delete-restaurent/:public_id').delete(isAuth,isRestaurant,delete_Restaurent)
+routes.route('/restaurent_update/:public_id').patch(isAuth, isRestaurant,uploadFile,edit_Restaurant)
+routes.route('/delete-restaurent').delete(isAuth,isRestaurant,delete_Restaurent)
 routes.route('/pause-Restaurent').patch(isAuth,isRestaurant,pause_Restaurent)
+
 
 export const restaurant_route=routes;

@@ -15,9 +15,12 @@ import {
 } from "../types/restaurant.type";
 import toast from "react-hot-toast";
 import { useState } from "react";
+import useUser from "../Hooks/useUser";
 
 export const RestaurantProvider = ({ children }: apiInterfaceType) => {
   const queryClient = useQueryClient();
+
+  const {userData}=useUser()
 
   // Fetch Restaurant
   const { data, isLoading, isFetching, isError, error } = useQuery<
@@ -28,6 +31,7 @@ export const RestaurantProvider = ({ children }: apiInterfaceType) => {
     queryFn: fetch_Myrestaurant,
     staleTime: 1000 * 60 * 5,
     retry: false,
+    // enabled: !!userData && userData.role === "resturant",
   });
 
   // Create Restaurant
@@ -102,7 +106,7 @@ export const RestaurantProvider = ({ children }: apiInterfaceType) => {
   const errorMessage = error?.msg || error?.message || "An error occurred";
 
   // ✅ Restaurant exists only when backend confirmed success with a doc
-  const isRestaurantExist = data?.success === true && !!data?.msg;
+  const isRestaurantExist = data?.success === true && !!data?.msg;  
 
   // ✅ isLoading: true during initial fetch AND during refetch after creation
   const loading = isLoading || isFetching;

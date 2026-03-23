@@ -1,7 +1,33 @@
+// src/pages/Restaurant/CreateRestaurant.tsx
+// ─────────────────────────────────────────────────────────────────────────────
+// Step 2 (Location) now uses a Leaflet map picker instead of raw lat/lng inputs.
+// • Map auto-locates to user's GPS on arrival at step 2
+// • Click anywhere on map → pin drops, reverse-geocode fills address
+// • "Use my location" button re-locates
+// • Manual lat/lng fields still available below as fallback
+// All other steps (Details, Review) and all existing logic unchanged.
+// ─────────────────────────────────────────────────────────────────────────────
+
 import { useState, useRef, useEffect } from "react";
 import { Navigate, useNavigate } from "react-router-dom";
 import { useRestaurant } from "../../Hooks/useRestaurant";
 import { useUserLocation } from "../../Hooks/useUserLocation";
+import {
+  MapContainer, TileLayer, Marker,
+  useMapEvents, useMap,
+} from "react-leaflet";
+import L from "leaflet";
+import { LuLocateFixed } from "react-icons/lu";
+import { BiLoader } from "react-icons/bi";
+import { FiMapPin } from "react-icons/fi";
+
+// ── Leaflet icon fix ──────────────────────────────────────────────────────────
+delete (L.Icon.Default.prototype as any)._getIconUrl;
+L.Icon.Default.mergeOptions({
+  iconRetinaUrl: "https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon-2x.png",
+  iconUrl:       "https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png",
+  shadowUrl:     "https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png",
+});
 
 // ─── types ────────────────────────────────────────────────────────────────────
 
@@ -51,16 +77,83 @@ const focus = (e: React.FocusEvent<HTMLInputElement | HTMLTextAreaElement>) =>
 const blur = (e: React.FocusEvent<HTMLInputElement | HTMLTextAreaElement>) =>
   (e.target.style.borderColor = "#F0E0E8");
 
+// ─── Map sub-components ───────────────────────────────────────────────────────
+
+const NOMINATIM = "https://nominatim.openstreetmap.org/reverse";
+
+// Click-to-pin
+const LocationPicker = ({ onPick }: { onPick: (lat: number, lng: number) => void }) => {
+  useMapEvents({ click: (e) => onPick(e.latlng.lat, e.latlng.lng) });
+  return null;
+};
+
+// "Use my location" + auto-locate on first mount
+const LocateMeButton = ({
+  onLocate,
+  autoOnMount,
+}: {
+  onLocate: (lat: number, lng: number) => void;
+  autoOnMount?: boolean;
+}) => {
+  const map = useMap();
+  const [loading, setLoading] = useState(false);
+
+  // Auto-locate when map first renders (step 2 arrival)
+  useEffect(() => {
+    if (!autoOnMount || !navigator.geolocation) return;
+    navigator.geolocation.getCurrentPosition(
+      (pos) => {
+        const { latitude, longitude } = pos.coords;
+        map.flyTo([latitude, longitude], 16, { animate: true });
+        onLocate(latitude, longitude);
+      },
+      () => {} // silent — user can click button
+    );
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  const locate = () => {
+    if (!navigator.geolocation) return;
+    setLoading(true);
+    navigator.geolocation.getCurrentPosition(
+      (pos) => {
+        const { latitude, longitude } = pos.coords;
+        map.flyTo([latitude, longitude], 16, { animate: true });
+        onLocate(latitude, longitude);
+        setLoading(false);
+      },
+      () => setLoading(false)
+    );
+  };
+
+  return (
+    <button
+      onClick={locate}
+      style={{
+        position: "absolute", top: 12, right: 12, zIndex: 1000,
+        display: "flex", alignItems: "center", gap: 7,
+        padding: "8px 14px", borderRadius: 12,
+        background: "white", border: "1.5px solid rgba(226,55,116,0.25)",
+        color: "#E23774", fontSize: 12, fontWeight: 700,
+        cursor: "pointer", boxShadow: "0 2px 10px rgba(226,55,116,0.15)",
+        fontFamily: "'DM Sans', sans-serif",
+      }}
+    >
+      {loading
+        ? <BiLoader size={14} style={{ animation: "spin 0.7s linear infinite" }} />
+        : <LuLocateFixed size={14} />}
+      Use my location
+    </button>
+  );
+};
+
 // ─── component ────────────────────────────────────────────────────────────────
 
 const CreateRestaurant = () => {
   const { createMutation, isRestaurantExist, isLoading } = useRestaurant();
-  const { locationData, locationLoading, permissionDenied } = useUserLocation();
+  const { locationData } = useUserLocation();
   const navigate = useNavigate();
 
-  // ✅ React to isRestaurantExist becoming true (after invalidateQueries refetch settles)
-  // This is reliable — navigate() inside mutate() callback fires before the query
-  // refetch completes, so the guard returns null and kills the component mid-navigate.
   useEffect(() => {
     if (isRestaurantExist) {
       navigate("/restaurant", { replace: true });
@@ -68,20 +161,18 @@ const CreateRestaurant = () => {
   }, [isRestaurantExist, navigate]);
 
   const [step, setStep] = useState<Step>(1);
-  const [locationFilled, setLocationFilled] = useState(false);
   const imageRef = useRef<HTMLInputElement>(null);
 
   const [form, setForm] = useState<FormState>({
-    name: "",
-    email: "",
-    phone: "",
-    description: "",
-    image: null,
-    imagePreview: "",
-    latitude: "",
-    longitude: "",
-    formatedAddress: "",
+    name: "", email: "", phone: "", description: "",
+    image: null, imagePreview: "",
+    latitude: "", longitude: "", formatedAddress: "",
   });
+
+  // ── map state (step 2) ────────────────────────────────────────────────────
+  const [mapLat,    setMapLat]    = useState<number | null>(null);
+  const [mapLng,    setMapLng]    = useState<number | null>(null);
+  const [geocoding, setGeocoding] = useState(false);
 
   const set = (key: keyof FormState, val: any) =>
     setForm((f) => ({ ...f, [key]: val }));
@@ -94,53 +185,58 @@ const CreateRestaurant = () => {
     set("image", file);
   };
 
-  // fill location fields from useUserLocation hook data
-  const fillFromHook = () => {
-    if (!locationData) return;
-    const lat = locationData.lat ?? "";
-    const lon = locationData.lon ?? "";
-    const address = locationData.display_name ?? "";
-    set("latitude", String(lat));
-    set("longitude", String(lon));
-    set("formatedAddress", address);
-    setLocationFilled(true);
+  // Reverse-geocode and sync form fields
+  const handleMapPick = async (lat: number, lng: number) => {
+    setMapLat(lat);
+    setMapLng(lng);
+    set("latitude",  String(lat));
+    set("longitude", String(lng));
+    setGeocoding(true);
+    try {
+      const res  = await fetch(`${NOMINATIM}?format=json&lat=${lat}&lon=${lng}`);
+      const data = await res.json();
+      const addr = data.display_name ?? "";
+      set("formatedAddress", addr);
+    } catch {
+      // silently ignore — user can type manually
+    } finally {
+      setGeocoding(false);
+    }
   };
 
   const handleSubmit = () => {
     const fd = new FormData();
-    fd.append("name", form.name);
-    fd.append("email", form.email);
-    fd.append("phone", form.phone);
-    fd.append("description", form.description);
-    fd.append("latitude", form.latitude);
-    fd.append("longitude", form.longitude);
+    fd.append("name",            form.name);
+    fd.append("email",           form.email);
+    fd.append("phone",           form.phone);
+    fd.append("description",     form.description);
+    fd.append("latitude",        form.latitude);
+    fd.append("longitude",       form.longitude);
     fd.append("formatedAddress", form.formatedAddress);
-    if (form.image) fd.append("file", form.image); // multer expects "file"
-
+    if (form.image) fd.append("file", form.image);
     createMutation.mutate(fd);
   };
 
   const submitting = createMutation.isPending;
 
-  // ⏳ Only block render on the *initial* load (not during refetch after creation)
-  // createMutation.isSuccess means we just created — let useEffect handle the navigate
   if (isLoading && !createMutation.isSuccess) return null;
-
-  // 🚫 Already has a restaurant and we're not mid-creation → redirect
   if (isRestaurantExist && !createMutation.isPending) {
     return <Navigate to="/restaurant" replace />;
   }
 
+  const mapCenter: [number, number] = [
+    mapLat ?? 28.6139,
+    mapLng ?? 77.209,
+  ];
+
   return (
-    <div
-      style={{
-        minHeight: "100vh",
-        background: "#FFF8F0",
-        fontFamily: "'DM Sans', sans-serif",
-        padding: "40px 16px 80px",
-      }}
-    >
-      {/* bg blobs */}
+    <div style={{
+      minHeight: "100vh",
+      background: "#FFF8F0",
+      fontFamily: "'DM Sans', sans-serif",
+      padding: "40px 16px 80px",
+    }}>
+      {/* bg blobs — unchanged */}
       <div style={{ position: "fixed", inset: 0, pointerEvents: "none", zIndex: 0 }}>
         <div style={{ position: "absolute", top: 0, right: 0, width: "50%", height: "100%", opacity: 0.06, background: "linear-gradient(135deg,#E23774,#FF6B35)", clipPath: "polygon(18% 0%,100% 0%,100% 100%,0% 100%)" }} />
         <div style={{ position: "absolute", borderRadius: "50%", opacity: 0.06, width: 280, height: 280, top: -80, left: -60, background: "#E23774" }} />
@@ -149,7 +245,7 @@ const CreateRestaurant = () => {
 
       <div style={{ position: "relative", zIndex: 1, maxWidth: 640, margin: "0 auto" }}>
 
-        {/* header */}
+        {/* header — unchanged */}
         <div style={{ textAlign: "center", marginBottom: 40 }}>
           <p style={{ fontFamily: "'Bebas Neue',sans-serif", fontSize: 22, color: "#E23774", letterSpacing: 4, margin: "0 0 4px" }}>Tomato</p>
           <h1 style={{ fontFamily: "'Bebas Neue',sans-serif", fontSize: 56, color: "#1A0A00", margin: "0 0 8px", lineHeight: 1, letterSpacing: 1 }}>
@@ -160,12 +256,12 @@ const CreateRestaurant = () => {
           </p>
         </div>
 
-        {/* stepper */}
+        {/* stepper — unchanged */}
         <div style={{ display: "flex", alignItems: "center", justifyContent: "center", marginBottom: 40 }}>
           {([
-            { num: 1, label: "Details", icon: "🏪" },
+            { num: 1, label: "Details",  icon: "🏪" },
             { num: 2, label: "Location", icon: "📍" },
-            { num: 3, label: "Review", icon: "✅" },
+            { num: 3, label: "Review",   icon: "✅" },
           ] as { num: Step; label: string; icon: string }[]).map((s, i, arr) => (
             <div key={s.num} style={{ display: "flex", alignItems: "center" }}>
               <div
@@ -197,12 +293,11 @@ const CreateRestaurant = () => {
         {/* card */}
         <div style={{ background: "white", borderRadius: 28, padding: 36, boxShadow: "0 8px 48px rgba(226,55,116,0.08)", border: "1.5px solid #FDE8F0" }}>
 
-          {/* ── step 1: details ── */}
+          {/* ── step 1: details — unchanged ── */}
           {step === 1 && (
             <div>
               <SectionTitle>Restaurant details</SectionTitle>
 
-              {/* photo upload */}
               <div style={{ marginBottom: 20 }}>
                 <label style={labelStyle}>Restaurant photo *</label>
                 <div
@@ -222,7 +317,6 @@ const CreateRestaurant = () => {
                   onChange={(e) => handleImage(e.target.files?.[0] || null)} />
               </div>
 
-              {/* name */}
               <div style={{ marginBottom: 16 }}>
                 <label style={labelStyle}>Restaurant name *</label>
                 <input style={inputStyle} placeholder="e.g. Spice Garden"
@@ -230,7 +324,6 @@ const CreateRestaurant = () => {
                   onFocus={focus} onBlur={blur} />
               </div>
 
-              {/* email + phone */}
               <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16, marginBottom: 16 }}>
                 <div>
                   <label style={labelStyle}>Email *</label>
@@ -246,7 +339,6 @@ const CreateRestaurant = () => {
                 </div>
               </div>
 
-              {/* description */}
               <div>
                 <label style={labelStyle}>
                   Description{" "}
@@ -263,71 +355,88 @@ const CreateRestaurant = () => {
             </div>
           )}
 
-          {/* ── step 2: location ── */}
+          {/* ── step 2: location — MAP PICKER ── */}
           {step === 2 && (
             <div>
               <SectionTitle>Restaurant location</SectionTitle>
 
-              {/* auto-fill from hook */}
-              <button
-                onClick={fillFromHook}
-                disabled={locationLoading || permissionDenied || !locationData}
-                style={{
-                  width: "100%", padding: 16, borderRadius: 16,
-                  border: `2px dashed ${locationFilled ? "#22c55e" : "#E23774"}`,
-                  background: locationFilled ? "#f0fdf4" : "#FFF8F0",
-                  cursor: locationLoading || !locationData ? "not-allowed" : "pointer",
-                  marginBottom: 20, display: "flex", alignItems: "center",
-                  justifyContent: "center", gap: 10, transition: "all 0.2s",
-                  opacity: permissionDenied ? 0.5 : 1,
-                }}
-              >
-                <span style={{ fontSize: 20 }}>
-                  {locationLoading ? "⏳" : locationFilled ? "✅" : permissionDenied ? "🚫" : "📍"}
-                </span>
-                <div style={{ textAlign: "left" }}>
-                  <p style={{ fontFamily: "'Bebas Neue',sans-serif", fontSize: 18, letterSpacing: 1, color: locationFilled ? "#16a34a" : "#E23774", margin: 0 }}>
-                    {locationLoading
-                      ? "Detecting location..."
-                      : permissionDenied
-                      ? "Location permission denied"
-                      : locationFilled
-                      ? "Location filled ✓"
-                      : "Use my current location"}
-                  </p>
-                  <p style={{ fontSize: 12, color: "#bbb", margin: 0 }}>
-                    {locationFilled
-                      ? form.formatedAddress.slice(0, 65) + "…"
-                      : permissionDenied
-                      ? "Please enter coordinates manually below"
-                      : "Auto-fills latitude, longitude & address"}
-                  </p>
+              {/* Leaflet map */}
+              <div style={{
+                position: "relative", borderRadius: 18, overflow: "hidden",
+                height: 320, marginBottom: 16,
+                border: "1.5px solid rgba(226,55,116,0.18)",
+                boxShadow: "0 4px 20px rgba(226,55,116,0.08)",
+              }}>
+                <MapContainer
+                  center={mapCenter}
+                  zoom={mapLat ? 15 : 12}
+                  style={{ height: "100%", width: "100%" }}
+                >
+                  <TileLayer
+                    url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+                    attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
+                  />
+                  <LocationPicker onPick={handleMapPick} />
+                  {/* ✅ Auto-locate on step 2 arrival */}
+                  <LocateMeButton onLocate={handleMapPick} autoOnMount={!mapLat} />
+                  {mapLat !== null && mapLng !== null && (
+                    <Marker position={[mapLat, mapLng]} />
+                  )}
+                </MapContainer>
+              </div>
+
+              {/* hint */}
+              <p style={{ fontSize: 12, color: "#bbb", marginBottom: 14, textAlign: "center" }}>
+                📍 Tap anywhere on the map to pin your restaurant location
+              </p>
+
+              {/* Geocoded address preview */}
+              {(form.formatedAddress || geocoding) && (
+                <div style={{
+                  padding: "10px 14px", borderRadius: 12, marginBottom: 16,
+                  background: "rgba(226,55,116,0.04)",
+                  border: "1px solid rgba(226,55,116,0.15)",
+                  display: "flex", alignItems: "flex-start", gap: 8,
+                }}>
+                  <FiMapPin size={14} style={{ color: "#E23774", marginTop: 2, flexShrink: 0 }} />
+                  {geocoding
+                    ? <span style={{ fontSize: 12, color: "#aaa" }}>Detecting address…</span>
+                    : <span style={{ fontSize: 12, color: "#1A0A00", lineHeight: 1.5 }}>{form.formatedAddress}</span>}
                 </div>
-              </button>
+              )}
 
-              <Divider label="or enter manually" />
+              <Divider label="or adjust manually" />
 
-              {/* lat / lon */}
+              {/* Manual lat/lon overrides */}
               <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16, marginBottom: 16 }}>
                 <div>
-                  <label style={labelStyle}>Latitude *</label>
+                  <label style={labelStyle}>Latitude</label>
                   <input style={inputStyle} placeholder="e.g. 28.6139"
-                    value={form.latitude} onChange={(e) => set("latitude", e.target.value)}
+                    value={form.latitude}
+                    onChange={(e) => {
+                      set("latitude", e.target.value);
+                      const v = parseFloat(e.target.value);
+                      if (!isNaN(v)) setMapLat(v);
+                    }}
                     onFocus={focus} onBlur={blur} />
                 </div>
                 <div>
-                  <label style={labelStyle}>Longitude *</label>
+                  <label style={labelStyle}>Longitude</label>
                   <input style={inputStyle} placeholder="e.g. 77.2090"
-                    value={form.longitude} onChange={(e) => set("longitude", e.target.value)}
+                    value={form.longitude}
+                    onChange={(e) => {
+                      set("longitude", e.target.value);
+                      const v = parseFloat(e.target.value);
+                      if (!isNaN(v)) setMapLng(v);
+                    }}
                     onFocus={focus} onBlur={blur} />
                 </div>
               </div>
 
-              {/* address */}
               <div style={{ marginBottom: 20 }}>
-                <label style={labelStyle}>Formatted address *</label>
+                <label style={labelStyle}>Formatted address</label>
                 <textarea
-                  style={{ ...inputStyle, resize: "vertical", minHeight: 90 }}
+                  style={{ ...inputStyle, resize: "vertical", minHeight: 80 }}
                   placeholder="Full address visible to customers..."
                   value={form.formatedAddress}
                   onChange={(e) => set("formatedAddress", e.target.value)}
@@ -343,12 +452,11 @@ const CreateRestaurant = () => {
             </div>
           )}
 
-          {/* ── step 3: review ── */}
+          {/* ── step 3: review — unchanged ── */}
           {step === 3 && (
             <div>
               <SectionTitle>Review & submit</SectionTitle>
 
-              {/* preview card */}
               <div style={{ borderRadius: 20, overflow: "hidden", border: "1.5px solid #FDE8F0", marginBottom: 24 }}>
                 <div style={{ height: 120, background: form.imagePreview ? "transparent" : "linear-gradient(135deg,#E23774,#FF6B35)", overflow: "hidden" }}>
                   {form.imagePreview && <img src={form.imagePreview} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} />}
@@ -375,7 +483,6 @@ const CreateRestaurant = () => {
                 </div>
               </div>
 
-              {/* coords */}
               <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12, marginBottom: 20 }}>
                 {[["Latitude", form.latitude || "—"], ["Longitude", form.longitude || "—"]].map(([k, v]) => (
                   <div key={k} style={{ background: "#FFF8F0", borderRadius: 12, padding: "12px 16px" }}>
@@ -393,7 +500,7 @@ const CreateRestaurant = () => {
             </div>
           )}
 
-          {/* nav buttons */}
+          {/* nav buttons — unchanged */}
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginTop: 36 }}>
             <button
               onClick={() => step > 1 && setStep((step - 1) as Step)}
@@ -402,7 +509,6 @@ const CreateRestaurant = () => {
               ← Back
             </button>
 
-            {/* dots */}
             <div style={{ display: "flex", gap: 6 }}>
               {[1, 2, 3].map((n) => (
                 <div key={n} style={{ width: n === step ? 20 : 7, height: 7, borderRadius: 4, transition: "all 0.3s", background: n === step ? "linear-gradient(90deg,#E23774,#FF6B35)" : n < step ? "#F4B0C8" : "#F0E0E8" }} />
@@ -442,7 +548,7 @@ const CreateRestaurant = () => {
   );
 };
 
-// ─── small shared pieces ──────────────────────────────────────────────────────
+// ─── small shared pieces — unchanged ─────────────────────────────────────────
 
 const SectionTitle = ({ children }: { children: React.ReactNode }) => (
   <div style={{ marginBottom: 24 }}>

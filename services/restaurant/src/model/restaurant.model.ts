@@ -19,6 +19,19 @@ enum cusiene {
   Korean = "Korean",
 }
 
+enum CATEGORIES {
+  Starters = "Starters",
+  Main_Course = "Main Course",
+  Breads = "Breads",
+  Rice_Biryani = "Rice & Biryani", // Note: Avoid spaces/special chars in keys
+  Desserts = "Desserts",
+  Beverages = "Beverages",
+  Soups = "Soups",
+  Salads = "Salads",
+  Snacks = "Snacks",
+  Combos = "Combos",
+}
+
 export interface IRestaurant extends Document {
   name: string;
   email: string;
@@ -39,6 +52,7 @@ export interface IRestaurant extends Document {
   isOpen: boolean;
   createdAt: Date;
   generateToken: () => string;
+  generateTokenDelete:()=>string
 }
 
 const RestaurantSchema: Schema<IRestaurant> = new Schema(
@@ -94,6 +108,7 @@ const RestaurantSchema: Schema<IRestaurant> = new Schema(
         "Mediterranean",
         "Korean",
       ],
+      default:cusiene.Indian,
       required: false,
     },
     isVerified: {

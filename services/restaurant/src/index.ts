@@ -5,6 +5,10 @@ import { restaurant_route } from "./routes/restaurant.routes.js";
 import cookieParser from "cookie-parser";
 import cors from "cors";
 import { Menue_route } from "./routes/menu.routes.js";
+import { Cart_route } from "./routes/cart.routes.js";
+import { address_routes } from "./routes/address.routes.js";
+import { Order_route } from "./routes/orders.routes.js";
+
 dotenv.config();
 
 const app = express();
@@ -20,8 +24,11 @@ app.use(
   }),
 );
 app.use(express.urlencoded({ extended: true }));
-app.use("/api/auth", restaurant_route);
+app.use("/api/restaurant", restaurant_route);
 app.use("/api/menu", Menue_route);
+app.use("/api/cart", Cart_route);
+app.use("/api/user-address", address_routes);
+app.use("/api/order",Order_route)
 // index.ts — add this after all app.use() route registrations
 app.use((err: any, req: express.Request, res: express.Response, next: express.NextFunction) => {
   console.error("Global error handler:", err.stack);

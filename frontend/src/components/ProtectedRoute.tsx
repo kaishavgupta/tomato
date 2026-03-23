@@ -60,7 +60,7 @@ const ProtectedRoute = () => {
     if ([...USER_PATHS, ...RIDER_PATHS].includes(location.pathname))
       return <Navigate to={isRestaurantExist ? "/restaurant" : CREATE_PATH} replace />;
 
-    if (!isRestaurantExist) {
+    if (!isRestaurantExist) {      
       // No restaurant yet → only /restaurant/create is allowed
       // Trying to hit any other restaurant route → redirect to create
       if (location.pathname !== CREATE_PATH)

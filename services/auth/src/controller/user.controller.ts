@@ -1,10 +1,11 @@
-import { Request, response, Response } from "express";
+import { request, Request, response, Response } from "express";
 import { IUser, user_Model } from "../model/User.model.js";
 import TryCatch from "../middleware/tryCatch.middleware.js";
 import { AuthenticatedRequest } from "../middleware/isAuth.middleware.js";
 import { updateTokenSetCookie } from "../middleware/updateToken.js";
 import {oauth2client} from "../config/google.config.js"
 import axios from "axios";
+import mongoose from "mongoose";
 
 export const userLogin = TryCatch(async (req: Request, res: Response) => {
   const { code } = req.body;
@@ -98,3 +99,80 @@ export const user_profile = TryCatch(async (req: Request, res: Response) => {
     msg: userData,
   });
 });
+
+
+export const userUpdateAddress = TryCatch(
+ async (req: Request, res: Response) => {
+
+   const { userId, operation, defaultAddressId } = req.body;
+   console.log(userId, operation, defaultAddressId);
+   
+
+   if (!mongoose.Types.ObjectId.isValid(userId)) {
+     return res.status(400).json({
+       success:false,
+       msg:"Invalid userId"
+     });
+   }
+
+   let incValue = 0;
+
+   if (operation === "ADD") incValue = 1;
+   if (operation === "DELETE") incValue = -1;
+
+   const updatePayload:any = {
+     $inc: { addressCount: incValue }
+   };
+
+   // ⭐ update default only if provided
+   if (defaultAddressId !== undefined) {
+     updatePayload.$set = {
+       defaultAddressId: defaultAddressId
+     };
+   }
+
+   const user = await user_Model.findByIdAndUpdate(
+     userId,
+     updatePayload,
+     { new:true }
+   );
+
+   if (!user) {
+     return res.status(404).json({
+       success:false,
+       msg:"User not found"
+     });
+   }
+
+   return res.status(200).json({
+     success:true,
+     msg:"User address meta updated",
+     data:user
+   });
+
+ }
+);
+
+export const peakadress=TryCatch(async(req:Request,res:Response)=>{
+  const {userId}=req.params;
+  if(!mongoose.Types.ObjectId.isValid(userId as string)){
+     return res.status(400).json({
+       success:false,
+       msg:"Invalid userId"
+     });
+  }
+
+  const findUserAdress=await user_Model.findById(userId).select("defaultAddressId, addressCount")
+
+  if(!findUserAdress){
+    return res.status(500).json({
+      success:false,
+      msg:"Internal auth service server error"
+    })
+  }
+
+  res.status(200).json({
+    success:true,
+    msg:findUserAdress
+  })
+})

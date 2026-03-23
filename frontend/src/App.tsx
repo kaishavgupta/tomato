@@ -4,11 +4,10 @@ import Home from "./Pages/User/Home";
 import { Toaster } from "react-hot-toast";
 import PublicRoute from "./components/PublicRoute";
 import ProtectedRoute from "./components/ProtectedRoute";
-import SelectRole from "./Pages/SelectRole"
+import SelectRole from "./Pages/SelectRole";
 import Layout from "./components/Layout";
 import Menu from "./Pages/User/Menu";
 import Track from "./Pages/User/Track";
-import Order from "./Pages/User/Order";
 import RestaurantMenu from "./Pages/Restaurant/Menu.restaurant";
 import RestaurantOrders from "./Pages/Restaurant/Orders.restaurant";
 import RiderHome from "./Pages/Rider/RiderHome";
@@ -16,50 +15,97 @@ import RiderDeliveries from "./Pages/Rider/RiderDeliveries";
 import Cart from "./Pages/User/Cart";
 import CreateRestaurant from "./Pages/Restaurant/CreateRestaurant";
 import RestaurentAnalytics from "./Pages/Restaurant/Analytics.restaurant";
-import RestaurentSettings from "./Pages/Restaurant/Settings.restaurant";
+import RestaurentSettings from "./Pages/Restaurant/RestaurantSettings";
 import RestaurantDashboard from "./Pages/Restaurant/Dashboard.restaurant";
+import { MenuProvider } from "./context/MenuProvider";
+import UserSettings from "./Pages/User/UserSettings";
+import UserProfile from "./Pages/User/UserProfile";
+import "leaflet/dist/leaflet.css";
+import OrdersPage from "./Pages/User/OrderPage";
+import { OrderProvider } from "./context/OrderProvider";
+import Checkout from "./Pages/User/Checkout";
+
 const App = () => {
-const router = createBrowserRouter([
-  {
-    element: <Layout />,
-    children: [
-      {
-        element: <ProtectedRoute />,
-        children: [
+  const router = createBrowserRouter([
+    {
+      element: <Layout />,
+      children: [
+        {
+          element: <ProtectedRoute />,
+          children: [
+            { path: "/select-role", element: <SelectRole /> },
 
-          // ── role selection (all authenticated users) ──
-          { path: "/select-role", element: <SelectRole /> },
+            // ── Home — explore feed, global mode ──
+            {
+              path: "/",
+              element: (
+                <MenuProvider mode="global">
+                  <Home />
+                </MenuProvider>
+              ),
+            },
 
-          // ── user routes ──
-          { path: "/",        element: <Home /> },
-          { path: "/menu",    element: <Menu /> },
-          { path: "/orders",  element: <Order /> },
-          { path: "/track",   element: <Track /> },
-          { path: "/cart",    element: <Cart /> },
+            // ── Menu — browse all restaurants, global mode ──
+            {
+              path: "/menu",
+              element: (
+                <MenuProvider mode="global">
+                  <Menu />
+                </MenuProvider>
+              ),
+            },
 
-          // ── restaurant routes ──
-          { path: "/restaurant",         element: <RestaurantDashboard /> },
-          { path: "/restaurant/menu",    element: <RestaurantMenu /> },
-          { path: "/restaurant/orders",  element: <RestaurantOrders /> },
-          { path: "/restaurant/create",  element: <CreateRestaurant /> },
-          { path: "/restaurant/analytics",  element: <RestaurentAnalytics /> },
-          { path: "/restaurant/settings",  element: <RestaurentSettings /> },
+            {
+              path: "/orders",
+              element: (
+                <OrderProvider>
+                  <OrdersPage />
+                </OrderProvider>
+              ),
+            },
+            { path: "/track", element: <Track /> },
+            {
+              path: "/cart",
+              element: (
+                <OrderProvider>
+                  <Cart />
+                </OrderProvider>
+              ),
+            },
+            { path: "/settings", element: <UserSettings /> },
+            { path: "/profile", element: <UserProfile /> },
 
-          // ── rider routes ──
-          { path: "/rider",              element: <RiderHome /> },
-          { path: "/rider/deliveries",   element: <RiderDeliveries /> },
+            // ── Checkout: supports both /checkout and /checkout/:orderId ──
+            { path: "/checkout",           element: <Checkout /> },
+            { path: "/checkout/:orderId",  element: <Checkout /> },
 
-        ],
-      },
-      {
-        element: <PublicRoute />,
-        children: [
-          { path: "/login", element: <Login /> },
-        ],
-      },
-    ],
-  },
-]);
+            // ── restaurant routes ──
+            { path: "/restaurant", element: <RestaurantDashboard /> },
+            {
+              path: "/restaurant/menu",
+              element: (
+                <MenuProvider mode="owner">
+                  <RestaurantMenu />
+                </MenuProvider>
+              ),
+            },
+            { path: "/restaurant/orders", element: <RestaurantOrders /> },
+            { path: "/restaurant/create", element: <CreateRestaurant /> },
+            { path: "/restaurant/analytics", element: <RestaurentAnalytics /> },
+            { path: "/restaurant/settings", element: <RestaurentSettings /> },
+
+            // ── rider routes ──
+            { path: "/rider", element: <RiderHome /> },
+            { path: "/rider/deliveries", element: <RiderDeliveries /> },
+          ],
+        },
+        {
+          element: <PublicRoute />,
+          children: [{ path: "/login", element: <Login /> }],
+        },
+      ],
+    },
+  ]);
 
   return (
     <>

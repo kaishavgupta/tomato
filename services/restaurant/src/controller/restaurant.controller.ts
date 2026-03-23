@@ -4,8 +4,17 @@ import { AuthenticatedRequest } from "../middleware/isauth.middleware.js";
 import TryCatch from "../middleware/tryCatch.middleware.js";
 import { IRestaurant, restaurant_Model } from "../model/restaurant.model.js";
 import DataURIParser from "datauri/parser.js";
-import { delete_service, upload_service } from "../config/utils.apiCaller.js";
-import { clearCookie, updateTokenSetCookie, updateTokenSetCookie2 } from "../middleware/updateToken.js";
+import {
+  delete_service,
+  reUpload_service,
+  upload_service,
+} from "../config/utils.apiCaller.js";
+import {
+  clearCookie,
+  updateTokenSetCookie,
+  updateTokenSetCookie2,
+} from "../middleware/updateToken.js";
+import { log } from "console";
 
 interface UploadServiceResponse {
   success: boolean;
@@ -18,15 +27,13 @@ interface UploadServiceResponse {
 export const loginCreateResturant = TryCatch(
   async (req: AuthenticatedRequest, res) => {
     const user = req.user;
-    const role=req.user?.role
+    const role = req.user?.role;
     if (!user || !role) {
       return res.status(401).json({
         success: false,
         msg: "Unauthorized user or Selected role is not restaurant",
       });
     }
-
-
 
     // `user` is now definitely defined, so `_id` is a string
     const existingRestaurant = await restaurant_Model.findOne({
@@ -65,7 +72,7 @@ export const loginCreateResturant = TryCatch(
       });
     }
 
-    const fileBuffer:DataURIParser = await getBuffer(file);
+    const fileBuffer: DataURIParser = await getBuffer(file);
 
     if (!fileBuffer?.content) {
       return res.status(500).json({
@@ -74,7 +81,7 @@ export const loginCreateResturant = TryCatch(
       });
     }
 
-   const response=await upload_service(fileBuffer)   
+    const response = await upload_service(fileBuffer);
 
     const restaurant_created = await restaurant_Model.create({
       name,
@@ -92,7 +99,7 @@ export const loginCreateResturant = TryCatch(
         formatedAddress,
       },
     });
-     updateTokenSetCookie(restaurant_created as IRestaurant, res);
+    updateTokenSetCookie(restaurant_created as IRestaurant, res);
     res.status(201).json({
       success: true,
       msg: "Restaurant added successfully",
@@ -113,7 +120,7 @@ export const fetchmyRestaurant = TryCatch(
 
     const findResturant = await restaurant_Model.findOne({ ownerId: id });
     if (findResturant) {
-     updateTokenSetCookie(findResturant as IRestaurant, res);
+      updateTokenSetCookie(findResturant as IRestaurant, res);
       return res.status(200).json({
         success: true,
         msg: findResturant,
@@ -129,7 +136,11 @@ export const fetchmyRestaurant = TryCatch(
 
 export const openRestaurant = TryCatch(
   async (req: AuthenticatedRequest, res) => {
-    const { open } = req.body;
+    console.log("IM openRestaurant controller");
+    
+    const { open } = req.query;
+    console.log(open);
+    
     const restaurant_id = req.user?.restaurant_id;
 
     const findResturant = await restaurant_Model.findById(restaurant_id);
@@ -149,7 +160,7 @@ export const openRestaurant = TryCatch(
       });
     }
 
-    if(findResturant.pauseRestaurent){
+    if (findResturant.pauseRestaurent) {
       return res.status(401).json({
         success: false,
         msg: "Your Restaurant is Currently Paused By you Please Activate it in Settings",
@@ -187,7 +198,8 @@ export const edit_Restaurant = TryCatch(
       });
     }
 
-    const { name, phone, email, description } = req.body;
+    const public_id=req.params.public_id
+    const { name, phone, email, description,cusiene } = req.body;
     const file = req.file;
     const updateData = {} as IRestaurant;
 
@@ -200,20 +212,27 @@ export const edit_Restaurant = TryCatch(
           msg: "Failed to create File Buffer",
         });
       }
-      const response=await upload_service(fileBuffer)
+      const response = await reUpload_service(
+        fileBuffer,
+        public_id as string,
+      );
 
-      updateData.image=response.msg.url
+      updateData.image = {
+        url: response.msg.url,
+        public_id: response.msg.public_id,
+      };
     }
 
     if (name) updateData.name = name;
     if (email) updateData.email = email;
     if (phone) updateData.phone = phone;
     if (description) updateData.description = description;
+    if (cusiene) updateData.cusiene = cusiene;
 
     const updateRestaurant = await restaurant_Model.findByIdAndUpdate(
       restaurant_id,
       { $set: updateData },
-      { new: true },
+      { new: true ,runValidators: true},
     );
 
     if (!updateRestaurant) {
@@ -229,11 +248,14 @@ export const edit_Restaurant = TryCatch(
   },
 );
 
+
+
 export const delete_Restaurent = TryCatch(
   async (req: AuthenticatedRequest, res) => {
     const restaurant_id = req?.user?.restaurant_id;
-    const public_id=req?.params?.public_id
-   
+    console.log(restaurant_id);
+    
+
     if (!restaurant_id) {
       //status code 400 for bad request
       return res.status(400).json({
@@ -242,20 +264,21 @@ export const delete_Restaurent = TryCatch(
       });
     }
 
-    const deleteImage=await delete_service(public_id as string)
-
-    if(!deleteImage){
-      return res.status(400).json({
-        success: false,
-        msg: "Cant't Delete ,try again",
-      });
-    }
-
+    
+    
+    
     const delete_Restaurent =
     await restaurant_Model.findByIdAndDelete(restaurant_id);
+
+    const deleteImage = await delete_service(delete_Restaurent?.image.public_id as string);
+
+    if (!deleteImage) {
+      return res.status(400).json({
+        success: false,
+        msg: "Cant't Delete Restaurent Image",
+      });
+    }
     
-
-
     if (!delete_Restaurent) {
       return res.status(401).json({
         success: false,
@@ -263,7 +286,7 @@ export const delete_Restaurent = TryCatch(
       });
     }
     clearCookie(res);
-    updateTokenSetCookie2(delete_Restaurent,res)
+    updateTokenSetCookie2(delete_Restaurent, res);
     return res.status(200).json({
       success: true,
       msg: "Your restaurent is Permananetly Deleted from our DataBase",
@@ -271,9 +294,10 @@ export const delete_Restaurent = TryCatch(
   },
 );
 
-export const pause_Restaurent=TryCatch(async (req: AuthenticatedRequest, res) => {
-  const restaurant_id=req?.user?.restaurant_id
-  const {pauseRestaurent}=req.body;
+export const pause_Restaurent = TryCatch(
+  async (req: AuthenticatedRequest, res) => {
+    const restaurant_id = req?.user?.restaurant_id;
+    const { pauseRestaurent } = req.body;
     if (!restaurant_id) {
       //status code 400 for bad request
       return res.status(400).json({
@@ -282,9 +306,13 @@ export const pause_Restaurent=TryCatch(async (req: AuthenticatedRequest, res) =>
       });
     }
 
-    const findByIdAndUpdate=await restaurant_Model.findByIdAndUpdate(restaurant_id,{pauseRestaurent:pauseRestaurent},{ new: true, runValidators: true });
+    const findByIdAndUpdate = await restaurant_Model.findByIdAndUpdate(
+      restaurant_id,
+      { pauseRestaurent: pauseRestaurent },
+      { new: true, runValidators: true },
+    );
 
-    if(!findByIdAndUpdate){
+    if (!findByIdAndUpdate) {
       return res.status(400).json({
         success: false,
         msg: "Your Restaurant is either Deleted or Not Existed",
@@ -292,7 +320,8 @@ export const pause_Restaurent=TryCatch(async (req: AuthenticatedRequest, res) =>
     }
 
     res.status(200).json({
-        success: true,
-        msg: `Your Restaurant is ${findByIdAndUpdate.pauseRestaurent ? "Pause":"Resume"}` 
-      });
-})
+      success: true,
+      msg: `Your Restaurant is ${findByIdAndUpdate.pauseRestaurent ? "Pause" : "Resume"}`,
+    });
+  },
+);

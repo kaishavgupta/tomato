@@ -12,6 +12,8 @@ export interface IUser extends Document {
   email: string;
   image: string;
   role?: role | null;
+  defaultAddressId?:string;
+  addressCount?:number;
   generateToken: () => string;
 }
 
@@ -36,6 +38,14 @@ const UserSchema: Schema<IUser> = new Schema(
       enum: ["user", "rider", "restaurant"],
       default: null,
     },
+    defaultAddressId:{
+      type:String,
+      required:false
+    },
+    addressCount:{
+      type:Number,
+      default:0
+    }
   },
   {
     timestamps: true,

@@ -9,9 +9,7 @@ export const authService = axios.create({
 export const fetch_User = async () => {
   try {
     const response = await authService.get(`api/auth/user_profile`, {
-    });
-    console.log(response);
-    
+    });    
     return response?.data
   } catch (error) {
     console.log(`Error From fetch_user ${error}`);
@@ -22,9 +20,7 @@ export const fetch_User = async () => {
 
 export const add_role=async(role:roles)=>{
   try {
-    const response = await authService.post(`api/auth/add_role`,{role});
-    console.log(response);
-    
+    const response = await authService.post(`api/auth/add_role`,{role});    
     return response
   } catch (error) {
     console.log(error);
